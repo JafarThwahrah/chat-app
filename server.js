@@ -8,9 +8,42 @@ const server = http.createServer(app)
 const io = socketio(server);
 const formatMessage = require("./Models/message");
 const { userJoin,userLeave,getCurrentUser } = require('./Models/user');
-
+const { spawn } = require('child_process');
+const ffmpegPath = require('ffmpeg-static'); 
 //static file
 app.use(express.static(path.join(__dirname, 'public')))
+
+const multer = require('multer');
+const upload = multer({ dest:path.join (__dirname , 'uploads') });
+const converted = multer({ dest:path.join (__dirname , 'converted') });
+
+app.post('/upload-file', upload.single('uploaded'),async (req, res) => {
+    console.log(req.file); // the uploaded file
+
+     // Get the path of the uploaded file
+  const filePath = req.file.path;
+
+  // Spawn a child process to run ffmpeg
+  const ffmpeg = spawn(ffmpegPath, [
+    '-i', filePath,
+    '-vf', 'scale=320:240',
+    'resized.pdf'
+  ]);
+
+  // Handle output from ffmpeg
+  ffmpeg.stderr.on('data', (data) => {
+    console.log(`ffmpeg output: ${data}`);
+    res.send(data)
+    res.setHeader('Content-Type', 'text/plain');
+
+  });
+
+  // Handle completion of ffmpeg
+  ffmpeg.on('close', (code) => {
+    console.log(`ffmpeg exited with code ${code}`);
+  });
+    
+  });
 const botName = 'Bot'
 //on connection
 io.on('connection',(socket)=>{
@@ -37,6 +70,9 @@ if(user){
     }
     })
 })
+
+
+
 const PORT = 3000;
 server.listen(PORT, ()=>{
     console.log(`server running on port ${PORT}`);

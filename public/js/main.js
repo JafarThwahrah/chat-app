@@ -38,3 +38,16 @@ function outputMessage(message) {
     div.appendChild(para);
     document.querySelector('.chat-messages').appendChild(div);
   }
+  fileForm = document.getElementById('file-form')
+  fileForm.addEventListener('submit' , (e)=>{
+    e.preventDefault();
+    const fileInput = document.querySelector('input[type="file"]');
+    const formData = new FormData();
+    formData.append('uploaded', fileInput.files[0]);
+    fetch("http://localhost:3000/upload-file", {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => console.log(response))
+        .catch(error => console.error(error));
+  })
